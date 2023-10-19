@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Formulario de Contacto Personalizado
  * Description: Inserta un formulario de contacto con el shortcode [formulario_contacto]
- * Version: 1.0.1
+ * Version: 1.0.2
  * Author: Saul Hernandez
  * License: GPL2
  */
@@ -12,17 +12,31 @@ add_shortcode('formulario_contacto', 'render_formulario_contacto');
 
 function render_formulario_contacto() {
     $button_label = get_option('formulario_contacto_button_label', 'Enviar');
-    
-    $output = '<form action="" method="post" id="formulario_contacto">';
+    $button_color = get_option('formulario_contacto_button_color', '#0000FF');
+    $form_width = get_option('formulario_contacto_width', '300px');
+    $form_height = get_option('formulario_contacto_height', '400px');
+    $field_order = get_option('formulario_contacto_field_order', 'nombre,email,mensaje');
+    $fields = explode(',', $field_order);
 
-    // Añadir nonce al formulario
-    $output .= wp_nonce_field( 'formulario_contacto_nonce_action', 'formulario_contacto_nonce_field', true, false );
-    
-    $output .= '<input type="text" name="nombre" required placeholder="Nombre">
-        <input type="email" name="email" required placeholder="Correo electrónico">
-        <textarea name="mensaje" required placeholder="Mensaje"></textarea>
-        <input type="submit" value="' . esc_attr($button_label) . '">
-    </form>';
+    $output = '<form action="" method="post" id="formulario_contacto" style="width:'.esc_attr($form_width).';height:'.esc_attr($form_height).'">';
+    $output .= wp_nonce_field('formulario_contacto_nonce_action', 'formulario_contacto_nonce_field', true, false);
+
+    foreach ($fields as $field) {
+        switch ($field) {
+            case 'nombre':
+                $output .= '<input type="text" name="nombre" required placeholder="Nombre">';
+                break;
+            case 'email':
+                $output .= '<input type="email" name="email" required placeholder="Correo electrónico">';
+                break;
+            case 'mensaje':
+                $output .= '<textarea name="mensaje" required placeholder="Mensaje"></textarea>';
+                break;
+        }
+    }
+
+    $output .= '<input type="submit" value="' . esc_attr($button_label) . '" style="background-color:'.esc_attr($button_color).';">';
+    $output .= '</form>';
     
     return $output;
 }
@@ -60,13 +74,34 @@ function formulario_contacto_settings() {
 function formulario_contacto_options_page() {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         update_option('formulario_contacto_button_label', $_POST['button_label']);
+        update_option('formulario_contacto_button_color', $_POST['button_color']);
+        update_option('formulario_contacto_width', $_POST['form_width']);
+        update_option('formulario_contacto_height', $_POST['form_height']);
+        update_option('formulario_contacto_field_order', $_POST['field_order']);
     }
     
     $button_label = get_option('formulario_contacto_button_label', 'Enviar');
-    
+    $button_color = get_option('formulario_contacto_button_color', '#0000FF');
+    $form_width = get_option('formulario_contacto_width', '300px');
+    $form_height = get_option('formulario_contacto_height', '400px');
+    $field_order = get_option('formulario_contacto_field_order', 'nombre,email,mensaje');
+
     echo '<form method="post">
         <label>Etiqueta del botón:</label>
         <input type="text" name="button_label" value="' . esc_attr($button_label) . '">
+        <br>
+        <label>Color del botón:</label>
+        <input type="color" name="button_color" value="' . esc_attr($button_color) . '">
+        <br>
+        <label>Ancho del formulario (px o %):</label>
+        <input type="text" name="form_width" value="' . esc_attr($form_width) . '">
+        <br>
+        <label>Altura del formulario (px o %):</label>
+        <input type="text" name="form_height" value="' . esc_attr($form_height) . '">
+        <br>
+        <label>Orden de los campos (nombre,email,mensaje):</label>
+        <input type="text" name="field_order" value="' . esc_attr($field_order) . '">
+        <br>
         <input type="submit" value="Guardar">
     </form>';
 }
